@@ -1,7 +1,6 @@
+import json
 import os
 import re
-import json
-from copy import copy
 from typing import Any
 
 import pexpect
@@ -12,8 +11,8 @@ import Foundation
 func _toJSONString<T: Encodable>(_ value: T) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-	let data = try encoder.encode(value)
-	return String(data: data, encoding: .utf8)!
+    let data = try encoder.encode(value)
+    return String(data: data, encoding: .utf8)!
 }
 """
 END_OF_INCLUDE = "// -- END OF AUTO REPL INCLUDE --"
@@ -29,7 +28,9 @@ class Variable:
     def str(self) -> str:
         return extract_string_value(self.value)
 
-    def json(self, verbose: bool =False) -> dict[str, Any]:
+    def json(self, verbose: bool = False) -> dict[str, Any]:
+        if self._repl is None:
+            raise ValueError("Variable is not associated with a REPL instance.")
         output = self._repl.run(
             f"_toJSONString({self.name})",
             verbose=verbose,
@@ -90,8 +91,8 @@ class SwiftREPL:
             command, encoding="utf-8", timeout=1, env=env, cwd=cwd
         )
         self.vars = VariablesRegister(self)
-        self._reload_paths = set()
-        self._output = None
+        self._reload_paths: set[str] = set()
+        self._output: str | None = None
         self.run(INIT_COMMANDS, verbose=False)
         self.run("""print("REPL is running !")""")
 
@@ -124,8 +125,8 @@ class SwiftREPL:
                 buffer = self._process.read_nonblocking(self._process.maxread, timeout)
                 incoming.append(buffer)
             except pexpect.exceptions.TIMEOUT:
-                # a regex which matches the waiting prompt e.g. "1>" or "102>" but there must
-                # not be any text after the prompt
+                # a regex which matches the waiting prompt e.g. "1>" or "102>" but
+                # there must not be any text after the prompt
                 prompt_pattern = re.compile(r"(\d+>\s+$)")
                 buffer_end = "".join(incoming[-10:])
                 buffer_end_clean = clean(buffer_end)
@@ -134,8 +135,8 @@ class SwiftREPL:
                     continue
                 break
 
-        incoming = "".join(incoming)
-        output = clean(incoming)
+        incoming_str = "".join(incoming)
+        output = clean(incoming_str)
         if has_error(output):
             print(output)
             raise ValueError("Error in Swift code!")
@@ -361,7 +362,8 @@ def parse_output_variable(text):
     """
     variables = {}
 
-    # Regular expression pattern to match variable assignments of the form '$R7: Type = Value'
+    # Regular expression pattern to match variable assignments
+    # of the form '$R7: Type = Value'
     var_pattern = re.compile(r"(\$R\d+):\s*(\w+)\s*=\s*")
 
     # Find all matches in the text
@@ -404,24 +406,24 @@ def parse_output_variable(text):
     return list(variables.values())[0]
 
 
-def extract_string_value(s):
+def extract_string_value(text: str) -> str:
     """
     Extracts a string value enclosed in double quotes, handling escaped quotes.
 
     Args:
-        s (str): The raw value string starting with a quote.
+        text (str): The raw value string starting with a quote.
 
     Returns:
         str or None: The extracted string without the surrounding quotes,
                      or None if no closing quote is found.
     """
-    if not s.startswith('"'):
-        raise ValueError(f"String value must start with a double quote, got: {s=}")
+    if not text.startswith('"'):
+        raise ValueError(f"String value must start with a double quote, " f"got: {text=}")
     i = 1  # Skip the opening quote
     escaped = False
     value_chars = []
-    while i < len(s):
-        c = s[i]
+    while i < len(text):
+        c = text[i]
         if escaped:
             if c in ('"', "\\", "/"):
                 value_chars.append(c)
@@ -444,10 +446,10 @@ def extract_string_value(s):
             value_chars.append(c)
         i += 1
     # No closing quote found
-    raise ValueError(f"Unmatched quotes in string value, got: {s=}")
+    raise ValueError(f"Unmatched quotes in string value, got: {text=}")
 
 
-def parse_json_string(s):
+def parse_json_string(s: str) -> dict:
     """
     Attempts to parse a string as JSON.
 
@@ -460,4 +462,4 @@ def parse_json_string(s):
     try:
         return json.loads(s)
     except json.JSONDecodeError:
-        return None
+        raise ValueError(f"Failed to parse JSON string: {s}")
