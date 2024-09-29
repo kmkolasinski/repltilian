@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 1.0.0 🚀 [Krzysztof]
 - Merge branch 'main' of github.com:kmkolasinski/repltilian. [Krzysztof]
 - Merge pull request #6 from kmkolasinski/feature-initial-code.
   [Krzysztof Kolasinski]
