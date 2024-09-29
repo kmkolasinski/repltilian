@@ -4,6 +4,19 @@ Changelog
 
 (unreleased)
 ------------
+- Merge branch 'main' of github.com:kmkolasinski/repltilian. [Krzysztof]
+- Merge pull request #6 from kmkolasinski/feature-initial-code.
+  [Krzysztof Kolasinski]
+
+  Initial code for swift repl interation
+- Quick change. [Krzysztof]
+- Refactors. [Krzysztof]
+- Initial code for swift repl interation. [Krzysztof]
+
+
+1.0.0 (2024-09-29)
+------------------
+- Release: version 1.0.0 🚀 [Krzysztof]
 - Merge pull request #3 from
   kmkolasinski/dependabot/github_actions/actions/checkout-4. [Krzysztof
   Kolasinski]
