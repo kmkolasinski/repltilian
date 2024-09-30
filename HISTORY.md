@@ -4,6 +4,17 @@ Changelog
 
 (unreleased)
 ------------
+- Merge pull request #7 from kmkolasinski/feature-use-json-file-for-
+  serialization. [Krzysztof Kolasinski]
+
+  Add fixes for python - swift communitation
+- Quick change. [Krzysztof]
+- Add fixes for python - swift communitation. [Krzysztof]
+
+
+1.0.1 (2024-09-29)
+------------------
+- Release: version 1.0.1 🚀 [Krzysztof]
 - Release: version 1.0.0 🚀 [Krzysztof]
 - Merge branch 'main' of github.com:kmkolasinski/repltilian. [Krzysztof]
 - Merge pull request #6 from kmkolasinski/feature-initial-code.
