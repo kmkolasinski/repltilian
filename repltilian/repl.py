@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import tempfile
 from typing import Any
 
 import pexpect
@@ -8,12 +9,24 @@ import pexpect
 INIT_COMMANDS = """
 import Foundation
 
-func _toJSONString<T: Encodable>(_ value: T) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let data = try encoder.encode(value)
-    return String(data: data, encoding: .utf8)!
+// Function to deserialize an object from a JSON file at the given path
+func _deserializeObject<T: Decodable>(_ path: String) throws -> T {
+    let url = URL(fileURLWithPath: path)
+    let data = try Data(contentsOf: url)
+    let decoder = JSONDecoder()
+    let object = try decoder.decode(T.self, from: data)
+    return object
 }
+
+// Function to serialize an object and save it as a JSON file at the given path
+func _serializeObject<T: Encodable>(_ object: T, to path: String) throws {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys] // Optional formatting
+    let data = try encoder.encode(object)
+    let url = URL(fileURLWithPath: path)
+    try data.write(to: url)
+}
+
 """
 END_OF_INCLUDE = "// -- END OF AUTO REPL INCLUDE --"
 
@@ -31,12 +44,17 @@ class Variable:
     def json(self, verbose: bool = False) -> dict[str, Any]:
         if self._repl is None:
             raise ValueError("Variable is not associated with a REPL instance.")
-        output = self._repl.run(
-            f"_toJSONString({self.name})",
-            verbose=verbose,
-            reload=False,
-        )
-        return parse_output_variable(output)
+
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            path = f"{tmpfile.name}.json"
+            self._repl.run(
+                f'_serializeObject({self.name}, to: "{path}")',
+                verbose=verbose,
+                reload=False,
+            )
+            with open(path, "r") as file:
+                data = json.load(file)
+            return data
 
     def __repr__(self):
         return f"{self.name}[{self.dtype}] at {id(self)}"
@@ -52,30 +70,28 @@ class VariablesRegister(dict):
         variable._repl = self._repl_ref
         return variable
 
-    def __setitem__(self, key: str, value: dict | tuple[str, dict]):
-        if key in self and isinstance(value, dict):
-            variable: Variable = self[key]
-            data_str = json.dumps(value)
-            dtype = variable.dtype
+    def create(self, name: str, dtype: str, value: Any, verbose: bool = False):
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            path = f"{tmpfile.name}.json"
+            with open(path, "w") as fp:
+                json.dump(value, fp)
+
             self._repl_ref.run(
-                f"\nvar {key} = JSONDecoder().decode({dtype}.self, "
-                f'from: #"{data_str}"#.data(using: .utf8)!)\n',
-                verbose=False,
+                f'\nvar {name}: {dtype} = try _deserializeObject("{path}")\n',
+                verbose=verbose,
                 reload=False,
             )
-        else:
-            if not isinstance(value, tuple):
-                raise ValueError("Value must be a tuple (type, value dict)")
-            dtype, data = value
-            if not isinstance(data, dict):
-                raise ValueError("Value must be a dictionary")
-            data_str = json.dumps(data)
-            self._repl_ref.run(
-                f"\nvar {key} = JSONDecoder().decode({dtype}.self, "
-                f'from: #"{data_str}"#.data(using: .utf8)!)\n',
-                verbose=False,
-                reload=False,
+
+    def __setitem__(self, key: str, value: Any):
+        if key not in self:
+            raise ValueError(
+                f"Variable '{key}' not found in the REPL session. "
+                f"Use 'create' method to create a new variable."
             )
+
+        variable: Variable = self[key]
+        dtype = variable.dtype
+        self.create(key, dtype, value)
 
 
 class SwiftREPL:
@@ -418,7 +434,9 @@ def extract_string_value(text: str) -> str:
                      or None if no closing quote is found.
     """
     if not text.startswith('"'):
-        raise ValueError(f"String value must start with a double quote, " f"got: {text=}")
+        raise ValueError(
+            f"String value must start with a double quote, " f"got: {text=}"
+        )
     i = 1  # Skip the opening quote
     escaped = False
     value_chars = []
