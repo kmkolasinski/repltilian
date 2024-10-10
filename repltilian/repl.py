@@ -81,17 +81,7 @@ class VariablesRegister(dict):
                 verbose=verbose,
                 reload=False,
             )
-
-    def __setitem__(self, key: str, value: Any):
-        if key not in self:
-            raise ValueError(
-                f"Variable '{key}' not found in the REPL session. "
-                f"Use 'create' method to create a new variable."
-            )
-
-        variable: Variable = self[key]
-        dtype = variable.dtype
-        self.create(key, dtype, value)
+            self[name] = Variable(name, dtype, value)
 
 
 class SwiftREPL:
@@ -382,6 +372,7 @@ def get_files_content(paths: list[str]) -> str:
 def split_code_line(line: str) -> list[str]:
     return [line]
 
+
 def split_code_lines(lines: list[str]) -> list[str]:
     final_lines = []
     for line in lines:
@@ -477,9 +468,7 @@ class CodeBlock:
         )
 
 
-def extract_code_blocks(
-    source_lines: list[str]
-) -> list[CodeBlock]:
+def extract_code_blocks(source_lines: list[str]) -> list[CodeBlock]:
     blocks = []
     current_block = []
     start_line_num = 0
