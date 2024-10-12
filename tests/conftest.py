@@ -9,8 +9,8 @@ RESOURCES_DIR = THIS_FILE_DIR / "resources"
 
 
 @pytest.fixture()
-def sample_filepath() -> Path:
-    return RESOURCES_DIR / "demo.swift"
+def sample_filepath() -> str:
+    return str(RESOURCES_DIR / "demo.swift")
 
 
 @pytest.fixture()

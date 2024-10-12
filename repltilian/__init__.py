@@ -1,3 +1,3 @@
-from repltilian.repl import SwiftREPL  # noqa: F401
+from repltilian.repl import SwiftREPL, SwiftREPLException  # noqa: F401
 
-__all__ = ["SwiftREPL"]
+__all__ = ["SwiftREPL", "SwiftREPLException"]

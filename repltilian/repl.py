@@ -11,6 +11,10 @@ import pexpect
 from repltilian import code, constants, repl_output
 
 
+class SwiftREPLException(Exception):
+    pass
+
+
 @dataclass
 class Options:
     output_hide_inputs: bool = True
@@ -28,19 +32,33 @@ class SwiftREPL:
                 with `swift repl`.
             options: an instance of REPLOptions class with optional parameters for REPL output.
         """
-        env = os.environ.copy()
-        env = {"PATH": env["PATH"], "SHELL": env["SHELL"], "TERM": "dumb"}
-        command = "swift run --repl"
-        if cwd is None:
-            command = "swift repl"
-        self._process = pexpect.spawn(command, encoding="utf-8", timeout=1, env=env, cwd=cwd)
+        self.cwd = cwd
         self.options = options
         self.vars = VariablesRegister(self)
+        self._initialized = False
         self._reload_paths: set[str] = set()
         self._output: str | None = None
 
+        self._process = self._initiate_repl()
         self.run(constants.INIT_COMMANDS, verbose=False)
         self.run("""print("REPL is running !")""")
+
+    def _initiate_repl(self) -> pexpect.spawn:
+        env = os.environ.copy()
+        env = {"PATH": env["PATH"], "SHELL": env["SHELL"], "TERM": "dumb"}
+        command = "swift run --repl"
+        if self.cwd is None:
+            command = "swift repl"
+
+        self._process = pexpect.spawn(
+            command=command,
+            encoding="utf-8",
+            timeout=1,
+            env=env,
+            cwd=self.cwd,
+        )
+        self._initialized = True
+        return self._process
 
     def add_reload_file(self, path: str | Path) -> None:
         """Path to file which will be added to the REPL input before running the code."""
@@ -49,12 +67,19 @@ class SwiftREPL:
                 raise FileNotFoundError(f"File '{path}' does not exist.")
             self._reload_paths.add(str(path))
 
+    def clear_reload_files(self) -> None:
+        """Clear the list of files which are reloaded before running the code."""
+        self._reload_paths.clear()
+
     def run(
         self,
         prompt: str,
         autoreload: bool = False,
         verbose: bool = True,
     ) -> None:
+        if not self._initialized:
+            raise SwiftREPLException("REPL is not initialized.")
+
         include_paths: list[str] | None = None
         if self._reload_paths and autoreload:
             include_paths = list(self._reload_paths)
@@ -85,7 +110,7 @@ class SwiftREPL:
         self._output = output
         if error_line := repl_output.search_for_error(output):
             repl_output.print_output(output)
-            raise ValueError(f"Error in Swift code: '{error_line}'")
+            raise SwiftREPLException(f"Error in Swift code: '{error_line}'")
 
         if verbose:
             repl_output.print_output(
@@ -102,6 +127,7 @@ class SwiftREPL:
         self._process.sendline(":quit")
         self._process.terminate()
         self._process.close()
+        self._initialized = False
 
 
 class Variable:
@@ -116,7 +142,7 @@ class Variable:
         the JSON deserialization from REPL process.
         """
         if self._repl is None:
-            raise ValueError("Variable is not associated with a REPL instance.")
+            raise SwiftREPLException("Variable is not associated with a REPL instance.")
 
         with tempfile.NamedTemporaryFile() as tmpfile:
             path = f"{tmpfile.name}.json"
@@ -142,7 +168,7 @@ class VariablesRegister(dict[str, Variable]):
 
     def __setitem__(self, key: str, value: Any | Variable) -> None:
         if not isinstance(value, Variable):
-            raise ValueError(
+            raise SwiftREPLException(
                 "Only Variable instances can be added to the register, use set " "method instead."
             )
         super().__setitem__(key, value)
