@@ -3,6 +3,7 @@ import os
 import re
 import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import pexpect
@@ -41,10 +42,12 @@ class SwiftREPL:
         self.run(constants.INIT_COMMANDS, verbose=False)
         self.run("""print("REPL is running !")""")
 
-    def add_reload_file(self, path: str) -> None:
+    def add_reload_file(self, path: str | Path) -> None:
         """Path to file which will be added to the REPL input before running the code."""
         if path not in self._reload_paths:
-            self._reload_paths.add(path)
+            if not Path(path).is_file():
+                raise FileNotFoundError(f"File '{path}' does not exist.")
+            self._reload_paths.add(str(path))
 
     def run(
         self,

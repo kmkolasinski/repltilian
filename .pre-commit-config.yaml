@@ -30,8 +30,5 @@ repos:
         args: ["--python-version=3.11", "--config-file=setup.cfg"]
         exclude: ^repltilian/profiler.py
         additional_dependencies:
-          - pydantic
-          - pydantic-settings
           - types-requests
           - pytest
-          - types-Pillow
