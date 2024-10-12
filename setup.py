@@ -5,16 +5,16 @@ import os
 from setuptools import find_packages, setup
 
 
-def read(*paths, **kwargs):
+def read(filepath: str) -> str:
     with open(
-        os.path.join(os.path.dirname(__file__), *paths),
-        encoding=kwargs.get("encoding", "utf8"),
+        os.path.join(os.path.dirname(__file__), filepath),
+        encoding="utf-8",
     ) as open_file:
         content = open_file.read().strip()
     return content
 
 
-def read_requirements(path):
+def read_requirements(path: str) -> list[str]:
     return [
         line.strip()
         for line in read(path).split("\n")
@@ -24,7 +24,7 @@ def read_requirements(path):
 
 setup(
     name="repltilian",
-    version=read("repltilian", "VERSION"),
+    version=read("repltilian/VERSION"),
     description="Awesome repltilian created by kmkolasinski",
     url="https://github.com/kmkolasinski/repltilian/",
     long_description=read("README.md"),

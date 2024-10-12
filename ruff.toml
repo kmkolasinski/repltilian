@@ -40,10 +40,9 @@ extend-select = [
 ]
 # as long as we have interrogate we don't require docstring everywhere
 # more details can be found here https://docs.astral.sh/ruff/rules/#pydocstyle-d
-ignore = ["E203", "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D205"]
-
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D205", "D415"]
 # Only allow autofix for these import-related and docstring rules
-fixable = ["F401", "F403", "I001", "D411", "D415", "D208", "D209"]
+fixable = ["F401", "F403", "I001", "D411", "D415", "D208", "D209", "D202"]
 
 [lint.pydocstyle]
 convention = "google"

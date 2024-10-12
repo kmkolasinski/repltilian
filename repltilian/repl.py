@@ -2,6 +2,7 @@ import json
 import os
 import re
 import tempfile
+from dataclasses import dataclass
 from typing import Any
 
 import pexpect
@@ -9,111 +10,108 @@ import pexpect
 from repltilian import code, constants, repl_output
 
 
-class SwiftREPL:
-    def __init__(self, cwd: str | None = None):
-        env = os.environ.copy()
-        # env.pop("LD_LIBRARY_PATH", None)
-        # env.pop("LIBRARY_ROOTS", None)
-        # env.pop("XDG_DATA_DIRS", None)
-        env = {"PATH": env["PATH"], "SHELL": env["SHELL"], "TERM": "dumb"}
-        # env["TERM"] = "dumb"
-        print(env)
+@dataclass
+class Options:
+    output_hide_inputs: bool = True
+    output_stop_pattern: str | None = None
+    timeout: float = 0.01
 
+
+class SwiftREPL:
+    def __init__(self, cwd: str | None = None, options: Options = Options()) -> None:
+        """Initialize the Swift REPL.
+
+        Args:
+            cwd: optional path to the working directory, a folder with Package.swift file. If
+                provided, the REPL will be started with `swift run --repl` command, otherwise
+                with `swift repl`.
+            options: an instance of REPLOptions class with optional parameters for REPL output.
+        """
+        env = os.environ.copy()
+        env = {"PATH": env["PATH"], "SHELL": env["SHELL"], "TERM": "dumb"}
         command = "swift run --repl"
         if cwd is None:
             command = "swift repl"
         self._process = pexpect.spawn(command, encoding="utf-8", timeout=1, env=env, cwd=cwd)
+        self.options = options
         self.vars = VariablesRegister(self)
         self._reload_paths: set[str] = set()
         self._output: str | None = None
+
         self.run(constants.INIT_COMMANDS, verbose=False)
         self.run("""print("REPL is running !")""")
 
-    def add_reload_file(self, path: str):
+    def add_reload_file(self, path: str) -> None:
+        """Path to file which will be added to the REPL input before running the code."""
         if path not in self._reload_paths:
             self._reload_paths.add(path)
 
     def run(
         self,
         prompt: str,
-        timeout: float = 0.01,
+        autoreload: bool = False,
         verbose: bool = True,
-        reload: bool = False,
-        name_mapping: dict[str, str] | None = None,
-        output_stop_pattern: str | None = None,
-    ):
-        include = None
-        if self._reload_paths and reload:
-            include = list(self._reload_paths)
-        if include:
-            include_content = []
-            for file_path in include:
-                include_code = code.get_file_content(file_path)
-                include_content.append(include_code)
-            include_text = "\n".join(include_content)
-            if name_mapping is not None:
-                for old_name, new_name in name_mapping.items():
-                    include_text = include_text.replace(old_name, new_name)
+    ) -> None:
+        include_paths: list[str] | None = None
+        if self._reload_paths and autoreload:
+            include_paths = list(self._reload_paths)
+        if include_paths:
+            include_text = code.get_files_content(include_paths)
             prompt = include_text + "\n" + constants.END_OF_INCLUDE + "\n" + prompt
 
         self._process.sendline(prompt)
-        incoming = []
+        repl_raw_outputs = []
         while True:
             try:
-                buffer = self._process.read_nonblocking(self._process.maxread, timeout)
-                incoming.append(buffer)
+                buffer = self._process.read_nonblocking(
+                    size=self._process.maxread,
+                    timeout=self.options.timeout,
+                )
+                repl_raw_outputs.append(buffer)
             except pexpect.exceptions.TIMEOUT:
                 # a regex which matches the waiting prompt e.g. "1>" or "102>" but
                 # there must not be any text after the prompt
-                prompt_pattern = re.compile(r"(\d+>\s+$)")
-                buffer_end = "".join(incoming[-10:])
-                buffer_end_clean = repl_output.clean(buffer_end)
-                has_prompt = prompt_pattern.search(buffer_end_clean)
+                prompt_pattern = re.compile(r"(\d+>$)")
+                buffer_end = "".join(repl_raw_outputs[-10:])
+                has_prompt = prompt_pattern.search(repl_output.clean(buffer_end))
                 if has_prompt is None:
                     continue
                 break
 
-        incoming_str = "".join(incoming)
-        output = repl_output.clean(incoming_str)
-        if repl_output.has_error(output):
-            print(output)
-            raise ValueError("Error in Swift code!")
+        output = repl_output.clean("".join(repl_raw_outputs))
         self._output = output
+        if error_line := repl_output.search_for_error(output):
+            repl_output.print_output(output)
+            raise ValueError(f"Error in Swift code: '{error_line}'")
+
         if verbose:
-            _, output = repl_output.split_output_by_end_of_include(output)
-            if output_stop_pattern is not None:
-                output_lines = output.split("\n")
-                stop_k = 0
-                for i, line in enumerate(output_lines):
-                    stop_k = i
-                    if output_stop_pattern in line:
-                        break
-                output = "\n".join(output_lines[:stop_k])
-            print(output)
+            repl_output.print_output(
+                output,
+                output_stop_pattern=self.options.output_stop_pattern,
+                output_hide_inputs=self.options.output_hide_inputs,
+            )
 
         variable_updates = repl_output.find_variables(output)
-        updates = {k: Variable(k, v[0], v[1]) for k, v in variable_updates.items()}
-        self.vars.update(updates)
-        return output
+        for key, (dtype, value) in variable_updates.items():
+            self.vars[key] = Variable(self, key, dtype, value)
 
-    def close(self):
-        # Exit the REPL
+    def close(self) -> None:
         self._process.sendline(":quit")
         self._process.terminate()
         self._process.close()
 
 
 class Variable:
-    def __init__(self, name: str, dtype: str, value: str):
+    def __init__(self, repl_ref: SwiftREPL, name: str, dtype: str, value: str):
         self.name = name
         self.dtype = dtype
         self.value = value
-        self._repl: SwiftREPL | None = None
+        self._repl = repl_ref
 
-    def str(self) -> str:
-        return repl_output.extract_string_value(self.value)
-
-    def json(self, verbose: bool = False) -> Any:
+    def get(self, verbose: bool = False) -> Any:
+        """Return the JSON representation of the variable obtained through
+        the JSON deserialization from REPL process.
+        """
         if self._repl is None:
             raise ValueError("Variable is not associated with a REPL instance.")
 
@@ -122,27 +120,34 @@ class Variable:
             self._repl.run(
                 f'_serializeObject({self.name}, to: "{path}")',
                 verbose=verbose,
-                reload=False,
+                autoreload=False,
             )
             with open(path) as file:
                 data = json.load(file)
             return data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.name}[{self.dtype}] at {id(self)}"
 
 
-class VariablesRegister(dict):
-    def __init__(self, repl_ref: "SwiftREPL"):
+class VariablesRegister(dict[str, Variable]):
+    """A class which is responsible for managing variables in the REPL."""
+
+    def __init__(self, repl_ref: SwiftREPL) -> None:
         super().__init__()
         self._repl_ref = repl_ref
 
-    def __getitem__(self, item: str):
-        variable = super().__getitem__(item)
-        variable._repl = self._repl_ref
-        return variable
+    def __setitem__(self, key: str, value: Any | Variable) -> None:
+        if not isinstance(value, Variable):
+            raise ValueError(
+                "Only Variable instances can be added to the register, use set " "method instead."
+            )
+        super().__setitem__(key, value)
 
-    def create(self, name: str, dtype: str, value: Any, verbose: bool = False):
+    def set(self, name: str, dtype: str, value: Any, verbose: bool = False) -> None:
+        """Set a variable in the REPL with the given name, type and value. This function will
+        create or update existing variable.
+        """
         with tempfile.NamedTemporaryFile() as tmpfile:
             path = f"{tmpfile.name}.json"
             with open(path, "w") as fp:
@@ -151,6 +156,6 @@ class VariablesRegister(dict):
             self._repl_ref.run(
                 f'\nvar {name}: {dtype} = try _deserializeObject("{path}")\n',
                 verbose=verbose,
-                reload=False,
+                autoreload=False,
             )
-            self[name] = Variable(name, dtype, value)
+            self[name] = Variable(self._repl_ref, name, dtype, value)
