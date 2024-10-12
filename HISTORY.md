@@ -2,8 +2,23 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+1.2.0 (2024-10-12)
+------------------
+- Update documentation. [Krzysztof]
+- Refactors. [Krzysztof]
+- Refactors. [Krzysztof]
+- Minor changes. [Krzysztof]
+- Code cleanup and simple tests. [Krzysztof]
+- Refactors. [Krzysztof]
+- Refactors. [Krzysztof]
+- Add minor changes. [Krzysztof]
+- Quick change. [Krzysztof]
+- Add line profiler. [Krzysztof]
+
+
+1.1.1 (2024-09-30)
+------------------
+- Release: version 1.1.1 🚀 [Krzysztof]
 - Merge pull request #7 from kmkolasinski/feature-use-json-file-for-
   serialization. [Krzysztof Kolasinski]
 
