@@ -1,14 +1,12 @@
-import sys
+from pathlib import Path
+
 import pytest
 
+THIS_FILE_DIR = Path(__file__).parent
+RESOURCES_DIR = THIS_FILE_DIR / "resources"
 
-# each test runs on cwd to its temp dir
-@pytest.fixture(autouse=True)
-def go_to_tmpdir(request):
-    # Get the fixture dynamically by its name.
-    tmpdir = request.getfixturevalue("tmpdir")
-    # ensure local test created packages can be imported
-    sys.path.insert(0, str(tmpdir))
-    # Chdir only for the duration of the test.
-    with tmpdir.as_cwd():
-        yield
+
+@pytest.fixture()
+def sample_code() -> str:
+    with open(RESOURCES_DIR / "demo.swift") as f:
+        return f.read()

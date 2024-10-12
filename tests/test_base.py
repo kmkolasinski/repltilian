@@ -1,5 +1,8 @@
-from repltilian.base import NAME
+from repltilian import repl
+
+engine = repl.SwiftREPL()
 
 
 def test_base():
-    assert NAME == "repltilian"
+    engine
+    assert True

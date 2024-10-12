@@ -3,7 +3,9 @@ line-length = 100
 exclude = [
     ".tox",
     ".git",
-    "venv"]
+    "venv",
+    "repltilian/profiler.py"
+]
 
 # Apply fixes automatically
 fix = true

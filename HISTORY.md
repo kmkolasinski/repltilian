@@ -121,5 +121,3 @@ Changelog
   ...
 - ✅ Ready to clone and code. [kmkolasinski]
 - Initial commit. [Krzysztof Kolasinski]
-
-
