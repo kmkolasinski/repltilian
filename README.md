@@ -5,8 +5,9 @@
 
 Interactive Swift REPL wrapper for Python
 
-## Install it from PyPI
 
+## Install it from PyPI
+https://pypi.org/project/repltilian/
 ```bash
 pip install repltilian
 ```
