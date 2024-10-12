@@ -8,7 +8,7 @@ from typing import Any
 
 import pexpect
 
-from repltilian import code, constants, repl_output
+from repltilian import code, constants, profiler, repl_output
 
 
 class SwiftREPLException(Exception):
@@ -18,6 +18,7 @@ class SwiftREPLException(Exception):
 @dataclass
 class Options:
     output_hide_inputs: bool = True
+    output_hide_variables: bool = False
     output_stop_pattern: str | None = None
     timeout: float = 0.01
 
@@ -115,13 +116,27 @@ class SwiftREPL:
         if verbose:
             repl_output.print_output(
                 output,
-                output_stop_pattern=self.options.output_stop_pattern,
-                output_hide_inputs=self.options.output_hide_inputs,
+                stop_output_at_pattern=self.options.output_stop_pattern,
+                hide_inputs=self.options.output_hide_inputs,
+                hide_variables=self.options.output_hide_variables,
             )
 
         variable_updates = repl_output.find_variables(output)
         for key, (dtype, value) in variable_updates.items():
             self.vars[key] = Variable(self, key, dtype, value)
+
+    def line_profile(
+        self,
+        prompt: str,
+        function_name: str,
+        source_path: str,
+        autoreload: bool = False,
+    ) -> None:
+        """Return the code with line profiling instrumentation."""
+        source_code = code.get_file_content(source_path)
+        profiled_function = profiler.get_function_for_line_profiler(function_name, source_code)
+        prompt = profiled_function + "\n" + prompt
+        self.run(prompt, autoreload=autoreload)
 
     def close(self) -> None:
         self._process.sendline(":quit")

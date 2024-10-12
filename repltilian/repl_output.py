@@ -3,6 +3,9 @@ import re
 
 from repltilian import constants
 
+# var_name: var_type = var_value or $R\d: var_type = var_value
+VARIABLE_LINE_PATTERN = r"^(\w+|\$R+\d):\s*(\S+)\s*=\s*(.*)$"
+
 
 def clean(text: str) -> str:
     """Cleans the raw output from a Swift REPL prompt output."""
@@ -125,7 +128,7 @@ def _split_output_by_end_of_include(cleaned_output: str) -> tuple[str, str]:
     return include_part, code_part
 
 
-def strip_prompt_input_lines(cleaned_output: str) -> str:
+def remove_prompt_input_lines(cleaned_output: str) -> str:
     r"""Searches for lines which start from \d+[>.] and removes them."""
     lines = cleaned_output.split("\n")
     stop = False
@@ -138,23 +141,42 @@ def strip_prompt_input_lines(cleaned_output: str) -> str:
     return "\n".join(lines[i:])
 
 
+def remove_prompt_variables_lines(cleaned_output: str) -> str:
+    r"""Searches for lines which start from \d+[>.] and removes them."""
+    lines = cleaned_output.split("\n")
+    stop = False
+    i = 0
+    for i, line in enumerate(lines):
+        if re.match(VARIABLE_LINE_PATTERN, line.strip()):
+            stop = True
+        elif stop:
+            break
+    return "\n".join(lines[: i - 1])
+
+
 def print_output(
     cleaned_output: str,
-    output_stop_pattern: str | None = None,
-    output_hide_inputs: bool = False,
+    stop_output_at_pattern: str | None = None,
+    hide_inputs: bool = False,
+    hide_variables: bool = False,
 ) -> None:
     """Print the cleaned output from REPL. Optionally limit the output by a stop pattern.
 
     Args:
         cleaned_output: swift REPL cleaned output
-        output_stop_pattern: pattern to stop the output
-        output_hide_inputs: hide input prompt lines from print
+        stop_output_at_pattern: pattern to stop the output rendering
+        hide_inputs: hide input prompt lines from REPL output
+        hide_variables: hide variable declarations from REPL output
     """
     _, output = _split_output_by_end_of_include(cleaned_output)
-    if output_hide_inputs:
-        output = strip_prompt_input_lines(output)
-    if output_stop_pattern is not None:
-        search_pattern = re.compile(output_stop_pattern)
+    if hide_inputs:
+        output = remove_prompt_input_lines(output)
+
+    if hide_variables:
+        output = remove_prompt_variables_lines(output)
+
+    if stop_output_at_pattern is not None:
+        search_pattern = re.compile(stop_output_at_pattern)
         output_lines = output.split("\n")
         stop_k = 0
         for i, line in enumerate(output_lines):
@@ -162,7 +184,11 @@ def print_output(
             if search_pattern.search(line):
                 break
         output = "\n".join(output_lines[:stop_k])
-    print(output)
+
+    output_lines = [line for line in output.split("\n") if line]
+    output = "\n".join(output_lines).strip()
+    if output:
+        print(output)
 
 
 def find_variables(cleaned_output: str) -> dict[str, tuple[str, str]]:
@@ -178,7 +204,7 @@ def find_variables(cleaned_output: str) -> dict[str, tuple[str, str]]:
     """
     register = {}
     lines = cleaned_output.splitlines()
-    variable_pattern = re.compile(r"^(\w+|\$R+\d):\s*(\S+)\s*=\s*(.*)$")
+    variable_pattern = re.compile(VARIABLE_LINE_PATTERN)
 
     in_value = False
     brace_counter = 0

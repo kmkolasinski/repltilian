@@ -123,7 +123,7 @@ def test__strip_prompt_input_lines() -> None:
       y = 106
     }
     """
-    output = repl_output.strip_prompt_input_lines(output)
+    output = repl_output.remove_prompt_input_lines(output)
     expected_output = """
     $R9: Point<Float> = {
       x = 12
@@ -140,7 +140,7 @@ def test__strip_prompt_input_lines__no_inputs() -> None:
       y = 106
     }
     """
-    output = repl_output.strip_prompt_input_lines(output)
+    output = repl_output.remove_prompt_input_lines(output)
     expected_output = """
     $R9: Point<Float> = {
       x = 12
