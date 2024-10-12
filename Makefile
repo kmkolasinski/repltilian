@@ -33,7 +33,7 @@ release:          ## Create a new tag for release.
 	@echo "$${TAG}" > repltilian/VERSION
 	@$(ENV_PREFIX)gitchangelog > HISTORY.md
 	@git add repltilian/VERSION HISTORY.md
-	@git commit -m "release: version $${TAG} 🚀"
+	@git commit -m "release: version $${TAG} 🚀" --no-verify
 	@echo "creating git tag : $${TAG}"
 	@git tag $${TAG}
 	@git push -u origin HEAD --tags
