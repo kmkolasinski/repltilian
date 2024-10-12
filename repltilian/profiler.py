@@ -45,7 +45,7 @@ def get_function_for_line_profiler(function_name: str, source_code: str) -> str:
         indent + "    let time = __line_times[line] ?? 0",
         indent + "    let per_hit = hits > 0 ? Double(time) / Double(hits) : 0",
         indent + "    let percent_time = __total_time > 0 "
-        "? (Double(time) /Double(__total_time)) * 100 : 0",
+        "? (Double(time) / Double(__total_time)) * 100 : 0",
         indent + "    let lineContentDict: [Int: String] = [",
     ]
 

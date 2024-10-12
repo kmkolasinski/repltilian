@@ -88,6 +88,9 @@ class SwiftREPL:
             include_text = code.get_files_content(include_paths)
             prompt = include_text + "\n" + constants.END_OF_INCLUDE + "\n" + prompt
 
+        if not prompt.startswith("\n"):
+            prompt = "\n" + prompt
+
         self._process.sendline(prompt)
         repl_raw_outputs = []
         while True:

@@ -24,7 +24,7 @@ clean:            ## Clean unused files.
 	@rm -rf htmlcov
 	@rm -rf .tox/
 	@rm -rf docs/_build
-	@rm coverage.xml .coverage
+	@rm -f coverage.xml .coverage
 
 .PHONY: release
 release:          ## Create a new tag for release.
