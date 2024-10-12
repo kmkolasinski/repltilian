@@ -2,12 +2,6 @@ Changelog
 =========
 
 
-(unreleased)
-------------
-- Fix release script. [Krzysztof]
-- Fix version file. [Krzysztof]
-
-
 1.2.0 (2024-10-12)
 ------------------
 - Update documentation. [Krzysztof]
@@ -142,5 +136,3 @@ Changelog
   ...
 - ✅ Ready to clone and code. [kmkolasinski]
 - Initial commit. [Krzysztof Kolasinski]
-
-
