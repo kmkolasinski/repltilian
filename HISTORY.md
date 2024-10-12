@@ -2,14 +2,12 @@ Changelog
 =========
 
 
-1.2.0 (2024-10-12)
+1.3.0 (2024-10-12)
 ------------------
 - Update documentation. [Krzysztof]
 - Refactors. [Krzysztof]
-- Refactors. [Krzysztof]
 - Minor changes. [Krzysztof]
 - Code cleanup and simple tests. [Krzysztof]
-- Refactors. [Krzysztof]
 - Refactors. [Krzysztof]
 - Add minor changes. [Krzysztof]
 - Quick change. [Krzysztof]
