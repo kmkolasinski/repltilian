@@ -4,7 +4,7 @@ import re
 from repltilian import constants
 
 # var_name: var_type = var_value or $R\d: var_type = var_value
-VARIABLE_LINE_PATTERN = r"^(\w+|\$R+\d):\s*(\S+)\s*=\s*(.*)$"
+VARIABLE_LINE_PATTERN = r"^(\w+|\$R+\d):\s*([ \S]+\b)\s*=\s*(.*)$"
 
 
 def clean(text: str) -> str:

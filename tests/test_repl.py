@@ -35,3 +35,11 @@ def test__create_variable_from_included_file(repl: SwiftREPL, sample_filepath: s
 
     point_data = repl.vars["point"].get()
     assert point_data == {"x": 1, "y": 2}
+
+
+def test__get_variable__not_in_register(repl: SwiftREPL) -> None:
+    repl.run("let x = 5")
+    assert repl.vars["x"].get() == 5
+
+    del repl.vars["x"]
+    assert repl.vars["x"].get() == 5

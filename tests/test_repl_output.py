@@ -156,6 +156,8 @@ def test__find_variables() -> None:
      170. var point1 = Point<Float>(x: 5, y: 2)
      174. result.translate(dx: 1, dy: 100)
      175. fake: String = "hello"
+    pairs: [Tuple<Point, Point>] = 5 values {
+    }
     a: String = "hello"
     $R9: Point<Float> = {
       x = 12
@@ -179,9 +181,11 @@ def test__find_variables() -> None:
         y = 2
       }
     }
+
     """
     variables = repl_output.find_variables(output)
     exp_variables = {
+        "pairs": "[Tuple<Point, Point>]",
         "$R9": "Point<Float>",
         "a": "String",
         "result": "Point<Float>",

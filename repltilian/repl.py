@@ -149,7 +149,13 @@ class SwiftREPL:
 
 
 class Variable:
-    def __init__(self, repl_ref: SwiftREPL, name: str, dtype: str, value: str):
+    def __init__(
+        self,
+        repl_ref: SwiftREPL,
+        name: str,
+        dtype: str | None = None,
+        value: str | None = None,
+    ):
         self.name = name
         self.dtype = dtype
         self.value = value
@@ -190,6 +196,11 @@ class VariablesRegister(dict[str, Variable]):
                 "Only Variable instances can be added to the register, use set " "method instead."
             )
         super().__setitem__(key, value)
+
+    def __getitem__(self, key: str) -> Variable:
+        if key not in self:
+            return Variable(self._repl_ref, key)
+        return super().__getitem__(key)
 
     def set(self, name: str, dtype: str, value: Any, verbose: bool = False) -> None:
         """Set a variable in the REPL with the given name, type and value. This function will
