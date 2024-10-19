@@ -203,3 +203,14 @@ def test__find_variables__should_ignore_text() -> None:
     """
     variables = repl_output.find_variables(output)
     assert variables == {}
+
+
+def test__find_variables__should_parse_correctly() -> None:
+    output = """
+    a: String = "hello = hello"
+    b: [Any] = [1, 2, 3, "hello == hello"]
+    """
+    variables = repl_output.find_variables(output)
+    assert len(variables) == 2
+    assert variables["a"] == ("String", '"hello = hello"')
+    assert variables["b"] == ("[Any]", '[1, 2, 3, "hello == hello"]')
