@@ -181,7 +181,6 @@ def test__find_variables() -> None:
         y = 2
       }
     }
-
     """
     variables = repl_output.find_variables(output)
     exp_variables = {
@@ -191,5 +190,16 @@ def test__find_variables() -> None:
         "result": "Point<Float>",
         "results": "[Point<Float>]",
     }
-    for key, (dtype, _) in variables.items():
-        assert exp_variables[key] == dtype
+    assert len(variables) == len(exp_variables)
+    for key, dtype in exp_variables.items():
+        assert variables[key][0] == dtype
+
+
+def test__find_variables__should_ignore_text() -> None:
+    output = """
+    test: will ignore this line - ok?
+    warning: will ignore this line = ok?
+    warning: will ignore this line=ok?
+    """
+    variables = repl_output.find_variables(output)
+    assert variables == {}

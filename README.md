@@ -5,14 +5,15 @@
 
 Interactive Swift REPL wrapper for Python
 
-
-## Install it from PyPI
+# Install it from PyPI
 https://pypi.org/project/repltilian/
 ```bash
 pip install repltilian
 ```
 
-## Basic Usage
+# Basic Usage
+
+See notebook [demo.ipynb](notebooks/demo.ipynb)
 
 ```py
 from repltilian import SwiftREPL
@@ -49,6 +50,44 @@ var p3 = p1 + p2
 """, autoreload=True)
 assert repl.vars["p3"].get() == {'x': 3, 'y': 3}
 ```
+
+# Basic support for ipython magic commands
+
+See notebook [demo-magics.ipynb](notebooks/demo-magics.ipynb)
+
+```bash
+# LOAD AND INIT REPL
+%load_ext repltilian
+%repl_init optional/path/to/package
+-----------------------------------------
+# RUNNING CODE IN THE CELL
+-----------------------------------------
+# run swift code in the current cell
+%%repl
+var values = [1, 2, 3, 4, 5]
+-----------------------------------------
+# add file to autoreload
+%repl_add_file demo.swift
+-----------------------------------------
+# run cell
+%%repl --autoreload --verbose
+var p1 = Point<Float>(x: 1, y: 2)
+var p2 = Point<Float>(x: 2, y: 1)
+var p3 = p1 + p2
+
+-----------------------------------------
+# GETTING AND SETTING VARIABLES
+-----------------------------------------
+# get the value of a variable from Swift to Python
+values = %repl_get values
+# set the value of a variable from Python to Swift
+%repl_set values: Array<Int> = [1, 2, 3, 4, 5]
+# to set the values of complex type use json.dumps to serialize the data to string
+import json
+data = json.dumps([1, 2, 3, 4, 5])
+%repl_set values: Array<Int> = $data
+```
+
 
 ## Line Profiling
 

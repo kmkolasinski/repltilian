@@ -4,7 +4,7 @@ import re
 from repltilian import constants
 
 # var_name: var_type = var_value or $R\d: var_type = var_value
-VARIABLE_LINE_PATTERN = r"^(\w+|\$R+\d):\s*([ \S]+\b)\s*=\s*(.*)$"
+VARIABLE_LINE_PATTERN = r"^(\w+|\$R+\d):\s*([ \S]+)\s*=\s*(.*)$"
 
 
 def clean(text: str) -> str:
@@ -213,11 +213,14 @@ def find_variables(cleaned_output: str) -> dict[str, tuple[str, str]]:
     current_var_value = ""
 
     for line in lines:
+        line = line.strip()
+        if line.startswith("warning:") or line.startswith("error:"):
+            continue
         if not in_value:
-            m = re.match(variable_pattern, line.strip())
+            m = re.match(variable_pattern, line)
             if m:
-                var_name = m.group(1)
-                var_type: str = m.group(2)
+                var_name: str = m.group(1).strip()
+                var_type: str = m.group(2).strip()
                 var_value: str = m.group(3).strip()
                 # Check for opening and closing braces in the initial value
                 open_braces = var_value.count("{")
