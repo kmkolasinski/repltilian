@@ -51,6 +51,26 @@ var p3 = p1 + p2
 assert repl.vars["p3"].get() == {'x': 3, 'y': 3}
 ```
 
+## Calling async functions
+Swift REPL will crash when trying to run async function in the main thread.
+If you need to run/test some async function via REPL you can use `runSync`
+function wrapper:
+```python
+from repltilian import SwiftREPL
+
+repl = SwiftREPL()
+repl.run("""
+func sum(_ a: Int, _ b: Int) async -> Int {
+    return a + b
+}
+let result = try runSync {await sum(5, 7)}
+"""
+)
+assert repl.vars["result"].get() == 12
+
+```
+
+
 # Basic support for ipython magic commands
 
 See notebook [demo-magics.ipynb](notebooks/demo-magics.ipynb)
