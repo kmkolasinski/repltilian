@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Fix version. [KK]
+- Release: version  🚀 [KK]
 - Add potential fix for macOS. [KK]
 
 
