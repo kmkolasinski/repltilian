@@ -21,6 +21,8 @@ class Options:
     output_hide_variables: bool = False
     output_stop_pattern: str | None = None
     timeout: float = 0.01
+    num_read_calls: int = 2
+    maxread: int = 8000
 
 
 class SwiftREPL:
@@ -91,15 +93,21 @@ class SwiftREPL:
         if not prompt.startswith("\n"):
             prompt = "\n" + prompt
 
-        self._process.sendline(prompt)
+        lines: list[str] = prompt.split("\n")
         repl_raw_outputs = []
         while True:
             try:
-                buffer = self._process.read_nonblocking(
-                    size=self._process.maxread,
-                    timeout=self.options.timeout,
-                )
-                repl_raw_outputs.append(buffer)
+                if lines:
+                    line = lines.pop(0)                    
+                    if line.strip() != "":
+                        self._process.sendline(line)
+                        
+                for _ in range(self.options.num_read_calls):
+                    buffer = self._process.read_nonblocking(
+                        size=self.options.maxread,
+                        timeout=self.options.timeout,
+                    )
+                    repl_raw_outputs.append(buffer)
             except pexpect.exceptions.EOF as e:
                 raise SwiftREPLException(
                     f"REPL crashed with error: '{e}'. Did you try to run "
@@ -115,6 +123,8 @@ class SwiftREPL:
                 if has_prompt is None:
                     continue
                 break
+            except Exception as e:
+                raise SwiftREPLException(f"REPL error: {e}")
 
         output = repl_output.clean("".join(repl_raw_outputs))
         self._output = output

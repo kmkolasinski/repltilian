@@ -22,7 +22,7 @@ func _serializeObject<T: Encodable>(_ object: T, to path: String) throws {
 
 /// Runs async function in a synchronous manner. REPL crashes when await is called in the
 /// main thread.
-func runSync<T>(_ asyncClosure: @escaping @Sendable () async throws -> T) throws -> T {
+func runSync<T>(_ asyncClosure: @escaping () async throws -> T) throws -> T {
     let semaphore = DispatchSemaphore(value: 0)
     var result: Result<T, Error>!
 
@@ -41,4 +41,5 @@ func runSync<T>(_ asyncClosure: @escaping @Sendable () async throws -> T) throws
 }
 
 """
+
 END_OF_INCLUDE = "// -- END OF AUTO REPL INCLUDE --"
