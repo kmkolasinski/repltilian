@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- Add potential fix for macOS. [KK]
+
+
+1.6.0 (2024-12-04)
+------------------
+- Release: version 1.6.0 🚀 [Krzysztof]
 - Release: version 1.5.0 🚀 [Krzysztof]
 - Quick change. [Krzysztof]
 - Add support for running async functions. [Krzysztof]
