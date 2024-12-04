@@ -4,6 +4,13 @@ Changelog
 
 (unreleased)
 ------------
+- Quick change. [Krzysztof]
+- Add support for running async functions. [Krzysztof]
+
+
+1.5.0 (2024-10-19)
+------------------
+- Release: version 1.5.0 🚀 [Krzysztof]
 - Improve Variable search pattern. [Krzysztof]
 - Add notebook with IPython Magics usage. [Krzysztof]
 - Add REPL Ipython Magics functionalities. [Krzysztof]
