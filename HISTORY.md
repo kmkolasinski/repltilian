@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 1.5.0 🚀 [Krzysztof]
 - Quick change. [Krzysztof]
 - Add support for running async functions. [Krzysztof]
 
