@@ -100,6 +100,12 @@ class SwiftREPL:
                     timeout=self.options.timeout,
                 )
                 repl_raw_outputs.append(buffer)
+            except pexpect.exceptions.EOF as e:
+                raise SwiftREPLException(
+                    f"REPL crashed with error: '{e}'. Did you try to run "
+                    f"async function ? If yes consider to use: 'try runSync "
+                    f"{{ try await yourAsyncFunction }}'"
+                )
             except pexpect.exceptions.TIMEOUT:
                 # a regex which matches the waiting prompt e.g. "1>" or "102>" but
                 # there must not be any text after the prompt

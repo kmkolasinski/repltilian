@@ -43,3 +43,27 @@ def test__get_variable__not_in_register(repl: SwiftREPL) -> None:
 
     del repl.vars["x"]
     assert repl.vars["x"].get() == 5
+
+
+def test__run_async_function__should_fail_on_await(repl: SwiftREPL) -> None:
+    repl.run(
+        """
+    func sum(_ a: Int, _ b: Int) async -> Int {
+        return a + b
+    }
+    """
+    )
+    with pytest.raises(SwiftREPLException):
+        repl.run("let result = await sum(5, 7)")
+
+
+def test__run_async_function(repl: SwiftREPL) -> None:
+    repl.run(
+        """
+    func sum(_ a: Int, _ b: Int) async -> Int {
+        return a + b
+    }
+    """
+    )
+    repl.run("let result = try runSync {await sum(5, 7)}")
+    assert repl.vars["result"].get() == 12
