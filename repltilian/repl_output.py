@@ -253,3 +253,27 @@ def find_variables(cleaned_output: str) -> dict[str, tuple[str, str]]:
                 brace_counter = 0
 
     return register
+
+
+def batch_prompt(prompt: str, size: int = 50) -> list[str]:
+    blocks: list[str] = []
+    lines = prompt.split("\n")
+    current_block: list[str] = []
+    for i, line in enumerate(lines):
+        if not line.strip():
+            # skip empty lines
+            continue
+        if line.strip().startswith("//"):
+            # skip comments lines
+            continue
+
+        if len(current_block) >= size:
+            blocks.append("\n".join(current_block))
+            current_block = [line]
+        else:
+            current_block.append(line)
+
+    if current_block:
+        blocks.append("\n".join(current_block))
+
+    return blocks

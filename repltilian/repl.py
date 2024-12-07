@@ -21,8 +21,8 @@ class Options:
     output_hide_variables: bool = False
     output_stop_pattern: str | None = None
     timeout: float = 0.01
-    num_read_calls: int = 2
-    maxread: int = 8000
+    num_read_calls: int = 1
+    maxread: int = 10000
 
 
 class SwiftREPL:
@@ -93,20 +93,22 @@ class SwiftREPL:
         if not prompt.startswith("\n"):
             prompt = "\n" + prompt
 
-        lines: list[str] = prompt.split("\n")
+        blocks = repl_output.batch_prompt(prompt, 100)
         repl_raw_outputs = []
         while True:
             try:
-                if lines:
-                    line = lines.pop(0)                    
-                    if line.strip() != "":
-                        self._process.sendline(line)
-                        
+                if blocks:
+                    block = blocks.pop(0)
+                    print("> sending", len(block))
+                    self._process.sendline(block)
+
                 for _ in range(self.options.num_read_calls):
+                    print("> reading")
                     buffer = self._process.read_nonblocking(
                         size=self.options.maxread,
                         timeout=self.options.timeout,
                     )
+                    print("> read:", len(buffer))
                     repl_raw_outputs.append(buffer)
             except pexpect.exceptions.EOF as e:
                 raise SwiftREPLException(

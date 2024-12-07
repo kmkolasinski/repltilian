@@ -214,3 +214,19 @@ def test__find_variables__should_parse_correctly() -> None:
     assert len(variables) == 2
     assert variables["a"] == ("String", '"hello = hello"')
     assert variables["b"] == ("[Any]", '[1, 2, 3, "hello == hello"]')
+
+
+def test__batch_prompt() -> None:
+    batches = repl_output.batch_prompt("let x = 1")
+    assert batches == ["let x = 1"]
+    prompt = """
+    let x = 1
+    // comment
+
+    let y = 2
+    """
+    prompt = "\n".join([line.strip() for line in prompt.split("\n")])
+    batches = repl_output.batch_prompt(prompt)
+    assert batches == ["let x = 1\nlet y = 2"]
+    batches = repl_output.batch_prompt(prompt, size=1)
+    assert batches == ["let x = 1", "let y = 2"]

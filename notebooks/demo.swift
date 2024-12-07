@@ -78,3 +78,127 @@ func removeBrackets(from text: String) -> String {
     let brackets = ["[", "]"]
     return text.filter { !brackets.contains(String($0)) }
 }
+
+
+func findKNearestNeighbors2<T: FloatingPoint>(query: [Point<T>], dataset: [Point<T>], k: Int = 5)
+    -> [SearchResult<T>]
+{
+    var results: [SearchResult<T>] = []
+
+    for queryPoint in query {
+        var distances: [Neighbor<T>] = []
+
+        // Calculate distances to all dataPoints {
+        for dataPoint in dataset {
+            let dx = queryPoint.x - dataPoint.x
+            let dy = queryPoint.y - dataPoint.y
+            let distance = (dx * dx + dy * dy).squareRoot()
+            distances.append(Neighbor(point: dataPoint, distance: distance))
+        }
+
+        // Sort neighbors by distance
+        distances.sort { $0.distance < $1.distance }
+
+        // Select the first k neighbors
+        let kNeighbors = Array(distances.prefix(k))
+
+        // Add to results
+        let searchResult = SearchResult(queryPoint: queryPoint, neighbors: kNeighbors)
+        results.append(searchResult)
+    }
+
+    return results
+}
+
+
+func findKNearestNeighbors3<T: FloatingPoint>(query: [Point<T>], dataset: [Point<T>], k: Int = 5)
+    -> [SearchResult<T>]
+{
+    var results: [SearchResult<T>] = []
+
+    for queryPoint in query {
+        var distances: [Neighbor<T>] = []
+
+        // Calculate distances to all dataPoints {
+        for dataPoint in dataset {
+            let dx = queryPoint.x - dataPoint.x
+            let dy = queryPoint.y - dataPoint.y
+            let distance = (dx * dx + dy * dy).squareRoot()
+            distances.append(Neighbor(point: dataPoint, distance: distance))
+        }
+
+        // Sort neighbors by distance
+        distances.sort { $0.distance < $1.distance }
+
+        // Select the first k neighbors
+        let kNeighbors = Array(distances.prefix(k))
+
+        // Add to results
+        let searchResult = SearchResult(queryPoint: queryPoint, neighbors: kNeighbors)
+        results.append(searchResult)
+    }
+
+    return results
+}
+
+
+func findKNearestNeighbors4<T: FloatingPoint>(query: [Point<T>], dataset: [Point<T>], k: Int = 5)
+    -> [SearchResult<T>]
+{
+    var results: [SearchResult<T>] = []
+
+    for queryPoint in query {
+        var distances: [Neighbor<T>] = []
+
+        // Calculate distances to all dataPoints {
+        for dataPoint in dataset {
+            let dx = queryPoint.x - dataPoint.x
+            let dy = queryPoint.y - dataPoint.y
+            let distance = (dx * dx + dy * dy).squareRoot()
+            distances.append(Neighbor(point: dataPoint, distance: distance))
+        }
+
+        // Sort neighbors by distance
+        distances.sort { $0.distance < $1.distance }
+
+        // Select the first k neighbors
+        let kNeighbors = Array(distances.prefix(k))
+
+        // Add to results
+        let searchResult = SearchResult(queryPoint: queryPoint, neighbors: kNeighbors)
+        results.append(searchResult)
+    }
+
+    return results
+}
+
+
+func findKNearestNeighbors5<T: FloatingPoint>(query: [Point<T>], dataset: [Point<T>], k: Int = 5)
+    -> [SearchResult<T>]
+{
+    var results: [SearchResult<T>] = []
+
+    for queryPoint in query {
+        var distances: [Neighbor<T>] = []
+
+        // Calculate distances to all dataPoints {
+        for dataPoint in dataset {
+            let dx = queryPoint.x - dataPoint.x
+            let dy = queryPoint.y - dataPoint.y
+            let distance = (dx * dx + dy * dy).squareRoot()
+            distances.append(Neighbor(point: dataPoint, distance: distance))
+        }
+
+        // Sort neighbors by distance
+        distances.sort { $0.distance < $1.distance }
+
+        // Select the first k neighbors
+        let kNeighbors = Array(distances.prefix(k))
+
+        // Add to results
+        let searchResult = SearchResult(queryPoint: queryPoint, neighbors: kNeighbors)
+        results.append(searchResult)
+    }
+
+    return results
+}
