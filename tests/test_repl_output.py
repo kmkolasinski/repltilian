@@ -227,6 +227,24 @@ def test__batch_prompt() -> None:
     """
     prompt = "\n".join([line.strip() for line in prompt.split("\n")])
     batches = repl_output.batch_prompt(prompt)
-    assert batches == ["let x = 1\nlet y = 2"]
-    batches = repl_output.batch_prompt(prompt, size=1)
-    assert batches == ["let x = 1", "let y = 2"]
+    assert batches == ['let x = 1\nlet y = 2']
+    batches = repl_output.batch_prompt(prompt, maxsize=10)
+    assert batches == ['let x = 1', 'let y = 2']
+    batches = repl_output.batch_prompt(prompt, maxsize=25)
+    assert batches == ['let x = 1\nlet y = 2']
+
+def test__split_prompt() -> None:
+    blocks = repl_output.split_prompt("let x = 1")
+    assert blocks == ["let x = 1"]
+    prompt = """
+    let x = 1
+    // comment
+
+    let y = 2
+    """
+    prompt = "\n".join([line.strip() for line in prompt.split("\n")])
+    blocks = repl_output.split_prompt(prompt)
+    assert blocks == [prompt]
+    blocks = repl_output.split_prompt(prompt, maxsize=10)
+    assert blocks == ['\nlet x = 1', '\n// commen', 't\n\nlet y =', ' 2\n']
+    assert [len(b) for b in blocks] == [10, 10, 10, 3]

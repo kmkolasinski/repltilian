@@ -255,19 +255,18 @@ def find_variables(cleaned_output: str) -> dict[str, tuple[str, str]]:
     return register
 
 
-def batch_prompt(prompt: str, size: int = 50) -> list[str]:
+def batch_prompt(prompt: str, maxsize: int = 50) -> list[str]:
     blocks: list[str] = []
-    lines = prompt.split("\n")
     current_block: list[str] = []
-    for i, line in enumerate(lines):
+    for line in prompt.split("\n"):
         if not line.strip():
             # skip empty lines
             continue
         if line.strip().startswith("//"):
             # skip comments lines
             continue
-
-        if len(current_block) >= size:
+        current_size = len("\n".join(current_block + [line]))
+        if current_size >= maxsize:
             blocks.append("\n".join(current_block))
             current_block = [line]
         else:
@@ -275,5 +274,18 @@ def batch_prompt(prompt: str, size: int = 50) -> list[str]:
 
     if current_block:
         blocks.append("\n".join(current_block))
+
+    return blocks
+
+
+def split_prompt(prompt: str, maxsize: int = 1000) -> list[str]:
+    blocks: list[str] = []
+    pos = 0
+    while True:
+        block = prompt[pos: pos + maxsize]
+        blocks.append(block)
+        pos += maxsize
+        if pos >= len(prompt):
+            break
 
     return blocks

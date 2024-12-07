@@ -5,7 +5,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
+import sys
 import pexpect
 
 from repltilian import code, constants, profiler, repl_output
@@ -21,8 +21,8 @@ class Options:
     output_hide_variables: bool = False
     output_stop_pattern: str | None = None
     timeout: float = 0.01
-    num_read_calls: int = 1
-    maxread: int = 10000
+    maxread: int = 4096
+    maxsend: int = 1000 if sys.platform == "darwin" else 2000
 
 
 class SwiftREPL:
@@ -93,40 +93,37 @@ class SwiftREPL:
         if not prompt.startswith("\n"):
             prompt = "\n" + prompt
 
-        blocks = repl_output.batch_prompt(prompt, 100)
+        blocks = repl_output.batch_prompt(prompt, self.options.maxsend)
         repl_raw_outputs = []
-        while True:
-            try:
-                if blocks:
-                    block = blocks.pop(0)
-                    print("> sending", len(block))
-                    self._process.sendline(block)
-
-                for _ in range(self.options.num_read_calls):
-                    print("> reading")
+        while blocks:
+            block = blocks.pop(0)
+            self._process.sendline(block)
+            while True:
+                try:
                     buffer = self._process.read_nonblocking(
                         size=self.options.maxread,
                         timeout=self.options.timeout,
                     )
-                    print("> read:", len(buffer))
                     repl_raw_outputs.append(buffer)
-            except pexpect.exceptions.EOF as e:
-                raise SwiftREPLException(
-                    f"REPL crashed with error: '{e}'. Did you try to run "
-                    f"async function ? If yes consider to use: 'try runSync "
-                    f"{{ try await yourAsyncFunction }}'"
-                )
-            except pexpect.exceptions.TIMEOUT:
-                # a regex which matches the waiting prompt e.g. "1>" or "102>" but
-                # there must not be any text after the prompt
-                prompt_pattern = re.compile(r"(\d+>$)")
-                buffer_end = "".join(repl_raw_outputs[-10:])
-                has_prompt = prompt_pattern.search(repl_output.clean(buffer_end))
-                if has_prompt is None:
-                    continue
-                break
-            except Exception as e:
-                raise SwiftREPLException(f"REPL error: {e}")
+                except pexpect.exceptions.EOF as e:
+                    raise SwiftREPLException(
+                        f"REPL crashed with error: '{e}'. Did you try to run "
+                        f"async function ? If yes consider to use: 'try runSync "
+                        f"{{ try await yourAsyncFunction }}'"
+                    )
+                except pexpect.exceptions.TIMEOUT:
+                    if blocks:
+                        break
+                    # a regex which matches the waiting prompt e.g. "1>" or "102>" but
+                    # there must not be any text after the prompt
+                    prompt_pattern = re.compile(r"(\d+>$)")
+                    buffer_end = "".join(repl_raw_outputs[-10:])
+                    has_prompt = prompt_pattern.search(repl_output.clean(buffer_end))
+                    if has_prompt is None:
+                        continue
+                    break
+                except Exception as e:
+                    raise SwiftREPLException(f"REPL error: {e}")
 
         output = repl_output.clean("".join(repl_raw_outputs))
         self._output = output
