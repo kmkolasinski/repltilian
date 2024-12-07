@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- MacOS compatibility. [KK]
+- Cleanups. [Krzysztof]
+- Ignore notebooks dir. [Krzysztof]
+- Batch long prompts. [Krzysztof]
+- Fix version file. [KK]
+- Release: version  🚀 [KK]
 - Fix version. [KK]
 - Release: version  🚀 [KK]
 - Add potential fix for macOS. [KK]
