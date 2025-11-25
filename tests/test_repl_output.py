@@ -112,6 +112,14 @@ def test__has_error() -> None:
     assert repl_output.search_for_error(text) is not None
 
 
+def test__has_error_swift_6_2_1() -> None:
+    # example error messages from Swift 6.2.1
+    text = "var point = x\n   ^\n   error: cannot find 'x' in scope\n 33>"
+    assert repl_output.search_for_error(text) == "error: cannot find 'x' in scope"
+    text = "33> var point = Point<Float>(x: 1, y: 2)\n   ^~~~~\n  error: cannot find 'Point' in scope\n 33>"  # noqa: E501
+    assert repl_output.search_for_error(text) == "error: cannot find 'Point' in scope"
+
+
 def test__strip_prompt_input_lines() -> None:
     output = """
     169>
@@ -227,11 +235,12 @@ def test__batch_prompt() -> None:
     """
     prompt = "\n".join([line.strip() for line in prompt.split("\n")])
     batches = repl_output.batch_prompt(prompt)
-    assert batches == ['let x = 1\nlet y = 2']
+    assert batches == ["let x = 1\nlet y = 2"]
     batches = repl_output.batch_prompt(prompt, maxsize=10)
-    assert batches == ['let x = 1', 'let y = 2']
+    assert batches == ["let x = 1", "let y = 2"]
     batches = repl_output.batch_prompt(prompt, maxsize=25)
-    assert batches == ['let x = 1\nlet y = 2']
+    assert batches == ["let x = 1\nlet y = 2"]
+
 
 def test__split_prompt() -> None:
     blocks = repl_output.split_prompt("let x = 1")
@@ -246,5 +255,5 @@ def test__split_prompt() -> None:
     blocks = repl_output.split_prompt(prompt)
     assert blocks == [prompt]
     blocks = repl_output.split_prompt(prompt, maxsize=10)
-    assert blocks == ['\nlet x = 1', '\n// commen', 't\n\nlet y =', ' 2\n']
+    assert blocks == ["\nlet x = 1", "\n// commen", "t\n\nlet y =", " 2\n"]
     assert [len(b) for b in blocks] == [10, 10, 10, 3]

@@ -104,10 +104,12 @@ def clean(text: str) -> str:
 
 def search_for_error(cleaned_output: str) -> str | None:
     """Check if the text contains an error message: "error:" or "$E{number}:"."""
-    error_pattern = re.compile(r"(\$E\d+):|^error:")
+    # Old pattern: error at start of line or $E{number}
+    # New pattern: error with leading whitespace (Swift 6.2.1+)
+    error_pattern = re.compile(r"(\$E\d+):|^error:|\s+error:")
     for line in cleaned_output.split("\n"):
         if error_pattern.search(line):
-            return line
+            return line.strip()
     return None
 
 
@@ -282,7 +284,7 @@ def split_prompt(prompt: str, maxsize: int = 1000) -> list[str]:
     blocks: list[str] = []
     pos = 0
     while True:
-        block = prompt[pos: pos + maxsize]
+        block = prompt[pos : pos + maxsize]
         blocks.append(block)
         pos += maxsize
         if pos >= len(prompt):
